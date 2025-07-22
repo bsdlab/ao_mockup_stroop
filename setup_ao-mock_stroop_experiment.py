@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 
 import pip
-import toml
 
 # The name of the folder that is to be created to store all the modules
 SETUP_FOLDER_NAME = "ao_mock_stroop"
@@ -57,9 +56,16 @@ except FileExistsError:
 
 
 repos = []
+print("Fetching dp-control-room")
 repos.append(Repo.clone_from(CONTROL_ROOM_URL, root_dir / "dp-control_room"))
+
+print("Fetching dp-ao-comm-mockup")
 repos.append(Repo.clone_from(AO_MOCKUP, root_dir / "dp-ao-comm-mockup"))
+
+print("Fetching dp-stroop")
 repos.append(Repo.clone_from(STROOP, root_dir / "dp-stroop"))
+
+print("Fetching dp-lsl-recording")
 repos.append(Repo.clone_from(LSL_URL, root_dir / "dp-lsl-recording"))
 
 
@@ -83,7 +89,8 @@ DATA_DIR = root_dir.joinpath("./data").resolve()
 #
 # >>> for dp-control-room
 #
-control_room_cfg = f"""
+control_room_cfg = (
+    """
 [exe]
 
 # -------------------- AO Mockup -----------------------------------------
@@ -91,7 +98,7 @@ control_room_cfg = f"""
     type = 'recording'
     port = 8081                                                                 
     ip = '127.0.0.1'
-    path = '../dp-ao-comm-mock/build/ao_comm
+    path = '../dp-ao-comm-mock/build/ao_comm'
 
 [exe.modules.dp-ao-comm-mockup.pcomms]                                      
 # currently still manually defined. the module needs to define a get_pcomms in the future
@@ -120,31 +127,33 @@ modules_root = '../'
 
 
 [macros]
+"""
+    + f"""
 
 [macros.run_modified]
     name = 'RUN MODIFIED STROOP'
     description = 'Run the modified stroop task'
 [macros.run_modified.default_json]
     fname = 'sub-P001_ses-S001_run-001_task-modifiedstroop'
-    data_root = {DATA_DIR.resolve()}
-    delay_s = 0.5                  # delay inbetween commands -> time for LSL recorder to respond
+    data_root = '{DATA_DIR.resolve()}'
     block_nr = 1
+    delay_s = 0.5                  # delay inbetween commands -> time for LSL recorder to respond
 [macros.run_modified.cmds]
     # [<target_module>, <PCOMM>, <kwarg_name1 (optional)>, <kwarg_name2 (optional)>]
-    com1 = ['dp-lsl-recording', 'UPDATE']
-    com2 = ['dp-lsl-recording', 'SELECT_ALL']
-    com3 = ['dp-lsl-recording', 'SET_SAVE_PATH', 'fname=fname', 'data_root=data_root']
-    com4 = ['dp-ao-comm-mockup', 'SETSAVENAME', 'fname=fname']
-    com5 = ['dp-lsl-recording', 'RECORD']
-    com6 = ['dp-ao-comm-mockup', 'STARTREC', 'fname=fname']
-    com7 = ['dp-stroop', 'RUN', 'block_nr=block_nr']
+    com1 = ['dp-stroop', 'RUN MODIFIED STROOP', 'block_nr=block_nr']
+    com2 = ['dp-ao-comm-mockup', 'SETSAVENAME', 'fname=fname']
+    com3 = ['dp-ao-comm-mockup', 'STARTREC', 'fname=fname']
+    com4 = ['dp-lsl-recording', 'SET_SAVE_PATH', 'fname=fname', 'data_root=data_root']
+    com5 = ['dp-lsl-recording', 'UPDATE']
+    com6 = ['dp-lsl-recording', 'SELECT_ALL']
+    com7 = ['dp-lsl-recording', 'RECORD']
 
 [macros.run_classical]
     name = 'RUN ClASSICAL STROOP'
     description = 'Run the classical stroop task'
 [macros.run_classical.default_json]
     fname = 'sub-P001_ses-S001_run-001_task-classicalstroop'
-    data_root = {DATA_DIR.resolve()}
+    data_root = '{DATA_DIR.resolve()}'
     block_nr = 1
     delay_s = 0.5                  # delay inbetween commands -> time for LSL recorder to respond
 [macros.run_classical.cmds]
@@ -154,10 +163,10 @@ modules_root = '../'
     com4 = ['dp-ao-comm-mockup', 'SETSAVENAME', 'fname=fname']
     com5 = ['dp-lsl-recording', 'RECORD']
     com6 = ['dp-ao-comm-mockup', 'STARTREC', 'fname=fname']
-    com7 = ['dp-stroop', 'RUNCLASSICAL', 'block_nr=block_nr']
+    com7 = ['dp-stroop', 'RUN CLASSICAL STROOP', 'block_nr=block_nr']
 
 [macros.stop_recording]
-    name = 'STOP_LSL_RECORDING'
+    name = 'STOP RECORDING'
     description = 'stop the offline recording'
 [macros.stop_recording.cmds]
     com1 = ['dp-lsl-recording', 'STOPRECORD']
@@ -167,30 +176,30 @@ modules_root = '../'
     name = 'START STIMULATE'
     description = 'Start the stimulation'
 [macros.stim.default_json]
-    stim_channel = 10272
-    ret_channel = 10273
-    # we do not specify more here for only providing symmetric pulses
     amplitude1_mA = 1
     amplitude2_mA = -1
+    stim_channel = 10272
+    ret_channel = 10273
     phase_width_mS = 0.06
     stim_freq_Hz = 130
     phase_delay_mS = 0
     duration_s = 2000
 [macros.stim.cmds]
     # Important: the order or the kwargs needs to be exactly this!
-    com1 = ['dp-ao-comm-mockup', 'StimChannel=stim_channel', 'FirstPhaseDelay_mS=phase_delay_mS', 'FirstPhaseAmpl_mA=amplitude1_mA', 'FirstPhaseWidth_mS=phase_width_mS', 'SecondPhaseDelay_mS=phase_delay_mS', 'SecondPhaseAmpl_mA=amplitude2_mA', 'SecondPhaseWidth_mS=phase_width_mS', 'Freq_hZ=stim_freq_Hz', 'RetChannel=ret_channel', 'Duration_sec=duration_s', 'ReturnChannel=ret_channel']
+    com1 = ['dp-ao-comm-mockup', 'STARTSTIM', 'StimChannel=stim_channel', 'FirstPhaseDelay_mS=phase_delay_mS', 'FirstPhaseAmpl_mA=amplitude1_mA', 'FirstPhaseWidth_mS=phase_width_mS', 'SecondPhaseDelay_mS=phase_delay_mS', 'SecondPhaseAmpl_mA=amplitude2_mA', 'SecondPhaseWidth_mS=phase_width_mS', 'Freq_hZ=stim_freq_Hz', 'RetChannel=ret_channel', 'Duration_sec=duration_s', 'ReturnChannel=ret_channel']
 
 [macros.stop_stim]
-    name = 'START STIMULATE'
+    name = 'STOP STIMULATE'
     description = 'Start the stimulation'
 [macros.stop_stim.default_json]
     stim_channel = 10272
 [macros.stop_stim.cmds]
     com1 = ['dp-ao-comm-mock', 'STOPSTIM', 'StimChannel=stim_channel']
 """
+)
 
 control_room_cfg_pth = Path(
-    f"./{SETUP_FOLDER_NAME}/dp-control_room/configs/cvep_speller.toml"
+    f"./{SETUP_FOLDER_NAME}/dp-control_room/configs/ao_mockup_stroop.toml"
 )
 with open(control_room_cfg_pth, "w") as f:
     f.write(control_room_cfg)
@@ -202,11 +211,11 @@ with open(control_room_cfg_pth, "w") as f:
 platform = sys.platform
 suffix = ".ps1" if platform == "win32" else ".sh"
 
-script_file = root_dir / f"run_ao_mock_stroop_experiment{suffix}"
+script_file = root_dir / "dp-control-room" / f"run_ao_mock_stroop_experiment{suffix}"
 
 with open(script_file, "w") as f:
     f.write(
         f"""
-        python -m dp-control_room.control_room.main --setup_cfg_path="{control_room_cfg_pth.resolve()}"
+        python -m control_room.main --setup_cfg_path="{control_room_cfg_pth.resolve()}"
         """
     )
