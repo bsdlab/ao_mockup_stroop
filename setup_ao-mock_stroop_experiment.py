@@ -40,8 +40,8 @@ for mod in requ_modules:
 # ----------------------------------------------------------------------------
 # Grab the git repos
 # ----------------------------------------------------------------------------
-from git import Repo
-
+# from git import Repo
+#
 root_dir = Path(SETUP_FOLDER_NAME)
 try:
     root_dir.mkdir(exist_ok=False)
@@ -57,7 +57,7 @@ except FileExistsError:
 
 repos = []
 print("Fetching dp-control-room")
-repos.append(Repo.clone_from(CONTROL_ROOM_URL, root_dir / "dp-control_room"))
+repos.append(Repo.clone_from(CONTROL_ROOM_URL, root_dir / "dp-control-room"))
 
 print("Fetching dp-ao-comm-mockup")
 repos.append(Repo.clone_from(AO_MOCKUP, root_dir / "dp-ao-comm-mockup"))
@@ -211,7 +211,7 @@ with open(control_room_cfg_pth, "w") as f:
 platform = sys.platform
 suffix = ".ps1" if platform == "win32" else ".sh"
 
-script_file = root_dir / "dp-control-room" / f"run_ao_mock_stroop_experiment{suffix}"
+script_file = root_dir / "dp-control_room" / f"run_ao_mock_stroop_experiment{suffix}"
 
 with open(script_file, "w") as f:
     f.write(
